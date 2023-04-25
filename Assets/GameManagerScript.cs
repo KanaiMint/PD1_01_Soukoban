@@ -1,77 +1,126 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 public class GameManagerScript : MonoBehaviour
 {
-    int[] map;
+    public GameObject playerPrehub;
+    public GameObject Box;
 
+    int[,] map;
+    GameObject[,] field;//ゲーム管理用の配列 
     // Start is called before the first frame update
     void Start()
     {
-        map = new int[] { 0, 0, 0, 1, 0, 2, 0, 0, 0 };
+        //GameObject instance = Instantiate(playerPrehub, new Vector3(0, 0, 0), Quaternion.identity);
+
+
+        map = new int[,] { 
+            { 0, 0, 0, 0, 0 },
+            { 0, 0, 1, 2, 0 },
+            { 0, 0, 0, 0, 0 },
+        };
+        field = new GameObject
+            [
+            map.GetLength(0),
+            map.GetLength(1)
+            ];
         string debugText = "";
-        for (int i = 0; i < map.Length; i++)
+        for (int y = 0; y < map.GetLength(0); y++)
         {
-            //Debug.Log(map[i] + ",");
-            debugText += map[i].ToString() + ",";
+            for (int x = 0; x < map.GetLength(1); x++)
+            {
+                if (map[y, x] == 1)
+                {
+                    //GameObject instance = Instantiate(
+                    field[y, x] = Instantiate(
+                        playerPrehub,
+                        new Vector3(x, map.GetLength(0) - y, 0),
+                        Quaternion.identity
+                        );
+                }
+                if (map[y, x] == 2)
+                {
+                    //GameObject instance = Instantiate(
+                    field[y, x] = Instantiate(
+                        Box,
+                        new Vector3(x, map.GetLength(0) - y, 0),
+                        Quaternion.identity
+                        );
+                }
+                //Debug.Log(map[i] + ",");
+                debugText += map[y, x].ToString() + ",";
+            }
+            debugText += "\n";//開業
         }
+
         Debug.Log(debugText);
     }
 
-    // Update is called once per frame
-    void Update()
+  //  Update is called once per frame
+        void Update()
     {
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            int playerIndex = GetPlayerIndex(); ;
+            Vector2Int playerIndex = GetPlayerIndex(); 
 
-            MoveNummber(1, playerIndex, playerIndex + 1);
-            PrintArray();
+            MoveNummber("Player", playerIndex, playerIndex +new Vector2Int(1,0) );
+          
         }
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            int playerIndex = GetPlayerIndex(); ;
+            Vector2Int playerIndex = GetPlayerIndex(); 
 
-            MoveNummber(1, playerIndex, playerIndex - 1);
+            MoveNummber("Player", playerIndex, playerIndex+new Vector2Int(-1,0));    
 
-            PrintArray();
+        }
+        if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            Vector2Int playerIndex = GetPlayerIndex();
 
+            MoveNummber("Player", playerIndex, playerIndex + new Vector2Int(0, -1));
+
+        }
+        if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            Vector2Int playerIndex = GetPlayerIndex();
+
+            MoveNummber("Player", playerIndex, playerIndex + new Vector2Int(0, 1));
 
         }
     }
-    void PrintArray()
+
+    Vector2Int GetPlayerIndex()
     {
-        string debugText = "";
-        for (int i = 0; i < map.Length; i++)
+        for (int y = 0; y < field.GetLength(0); y++)
         {
-            debugText += map[i].ToString() + ",";
-        }
-        Debug.Log(debugText);
-    }
-    int GetPlayerIndex()
-    {
-        for (int i = 0; i < map.Length; i++)
-        {
-            if (map[i] == 1)
+            for (int x = 0; x < field.GetLength(1); x++)
             {
-                return i;
+                if (field[y, x] == null) { continue; }
+                if (field[y,x].tag == "Player")
+                {
+                    return new Vector2Int(x, y);
+                }
             }
-
         }
-        return -1;
+        return new(-1,-1);
     }
-    bool MoveNummber(int number,int moveFrom,int moveTo)
-    {
-        if (moveTo < 0 || moveTo >= map.Length)
+        bool MoveNummber(string tag,Vector2Int moveFrom, Vector2Int moveTo)
         {
-            return false;
-        }
-        if (map[moveTo] == 2)
+            if (moveTo.y < 0 || moveTo.y >= field.GetLength(0))
+            {
+              return false;
+            }
+             if (moveTo.x < 0 || moveTo.x >= field.GetLength(1))
+             {
+                 return false;
+             }
+        if (field[moveTo.y, moveTo.x] != null && field[moveTo.y, moveTo.x].tag == "Box")
         {
-            int velocity = moveTo - moveFrom;
+            Vector2Int velocity = moveTo - moveFrom;
             //プレイヤーの移動先からさらに先へ２を移動させる。
-            bool success = MoveNummber(2, moveTo, moveTo + velocity);
+            bool success = MoveNummber(tag, moveTo, moveTo + velocity);
             //もし箱が衝突したら
             if (!success)
             {
@@ -79,9 +128,11 @@ public class GameManagerScript : MonoBehaviour
             }
         }
 
-        map[moveTo] = number;
-        map[moveFrom] = 0;
-        return true;
+        field[moveFrom.y,moveFrom.x].transform.position =
+            new Vector3(moveTo.x,field.GetLength(0)-moveTo.y,0);
+            field[moveTo.y,moveTo.x] =field[moveFrom.y,moveFrom.x];
+            field[moveFrom.y,moveFrom.x] = null;
+            return true;
+        }
+
     }
-   
-}
