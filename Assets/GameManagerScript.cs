@@ -7,6 +7,8 @@ public class GameManagerScript : MonoBehaviour
 {
     public GameObject playerPrehub;
     public GameObject Box;
+    public GameObject goals;
+    public GameObject ClearText;
 
     int[,] map;
     GameObject[,] field;//ÉQÅ[ÉÄä«óùópÇÃîzóÒ 
@@ -18,7 +20,7 @@ public class GameManagerScript : MonoBehaviour
 
         map = new int[,] { 
             { 0, 0, 0, 0, 0 },
-            { 0, 0, 1, 2, 0 },
+            { 3, 2, 1, 2, 3 },
             { 0, 0, 0, 0, 0 },
         };
         field = new GameObject
@@ -48,6 +50,13 @@ public class GameManagerScript : MonoBehaviour
                         new Vector3(x, map.GetLength(0) - y, 0),
                         Quaternion.identity
                         );
+                }
+                if (map[y, x] == 3)
+                {
+                    field[y, x] = Instantiate(
+                        goals,
+                        new Vector3(x, map.GetLength(0) - y, 0.01f),
+                        Quaternion.identity);
                 }
                 //Debug.Log(map[i] + ",");
                 debugText += map[y, x].ToString() + ",";
@@ -88,6 +97,15 @@ public class GameManagerScript : MonoBehaviour
 
             MoveNummber("Player", playerIndex, playerIndex + new Vector2Int(0, 1));
 
+        }
+
+        if (IsCleard())
+        {
+            ClearText.SetActive(true);
+        }
+        else
+        {
+            ClearText.SetActive(false);
         }
     }
 
@@ -134,5 +152,29 @@ public class GameManagerScript : MonoBehaviour
             field[moveFrom.y,moveFrom.x] = null;
             return true;
         }
+    bool IsCleard()
+    {
+        List<Vector2Int> goals = new List<Vector2Int>();
 
+        for(int y = 0; y < map.GetLength(0); y++)
+        {
+            for(int x = 0; x < map.GetLength(1); x++)
+            {
+                if (map[y, x] == 3)
+                {
+                    goals.Add(new Vector2Int(x, y));
+                }
+            }
+        }
+        //
+        for(int i = 0; i < goals.Count; i++)
+        {
+            GameObject f = field[goals[i].y, goals[i].x];
+            if (f == null || f.tag != "Box")
+            {
+                return false;
+            }
+        }
+        return true;
+    }
     }
